@@ -1,0 +1,18 @@
+filebeat.inputs:
+  - type: log
+    id: test_log
+    paths:
+      - /logs/*.log
+  - type: docker
+    id: container_log
+    containers.ids:
+      - '8b6fe7dc9e067b58476dc57d6986dd96d7100430c5de3b109a99cd56ac655347'
+
+output.logstash:
+    hosts: [ "elk-logstash:5044" ]
+    timeout: 15
+
+output.file:
+  path: "/tmp/filebeat"
+  filename: text_logs
+
