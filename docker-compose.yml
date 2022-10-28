@@ -1,11 +1,26 @@
 version: '3'
 services:
-  filebeat:
-    image: elastic/filebeat:7.7.0
+  local_filebeat:
+    image: elastic/filebeat:${elk_v}
+    container_name: local-filebeat
+    user: root
     restart: unless-stopped
     command: filebeat -e -strict.perms=false
     volumes:
-      - ./Filebeat/config.yml:/usr/share/filebeat/filebeat.yml
+      - ./Data/filebeat_logs:/tmp/filebeat
+      - ./Filebeat/to_file_config.yml:/usr/share/filebeat/filebeat.yml
+      - ./Filebeat/test_log.log:/logs/test_log.log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  filebeat:
+    image: elastic/filebeat:${elk_v}
+    container_name: elk-filebeat
+    user: root
+    restart: unless-stopped
+    command: filebeat -e -strict.perms=false
+    volumes:
+      - ./Filebeat/to_logstash_config.yml:/usr/share/filebeat/filebeat.yml
       - ./Filebeat/test_log.log:/logs/test_log.log:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -14,8 +29,20 @@ services:
     depends_on:
       - elasticsearch
 
+  logstash:
+    image: logstash:${elk_v}
+    container_name: elk-logstash
+    volumes:
+      - ./Data/logstash_output/:/tmp/logs/
+      - ./ELK/logstash/config.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./ELK/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
   elasticsearch:
-    image: elasticsearch:7.7.0
+    image: elasticsearch:${elk_v}
     container_name: elk-elasticsearch
     volumes:
       - ./ELK/elasticsearch/config.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
@@ -24,19 +51,8 @@ services:
     ports:
       - "9200:9200"
 
-  logstash:
-    image: logstash:7.7.0
-    container_name: elk-logstash
-    volumes:
-      - ./ELK/logstash/config.yml:/usr/share/logstash/config/logstash.yml:ro
-      - ./ELK/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
-    networks:
-      - elk
-    depends_on:
-      - elasticsearch
-
   kibana:
-    image: kibana:7.7.0
+    image: kibana:${elk_v}
     depends_on:
       - elasticsearch
     volumes:

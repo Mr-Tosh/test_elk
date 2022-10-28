@@ -1,0 +1,2 @@
+Data/filebeat_logs/*
+Data/logstash_output/*

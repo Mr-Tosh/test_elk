@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Clone a github repository
+      git:
+        repo: https://github.com/Mr-Tosh/test_elk.git
+        dest: /home/tosh/ansibletest/
+        clone: yes
+        update: yes
+
+    - name: This command will change the working directory to somedir/
+      ansible.builtin.shell:
+        cmd: docker-compose --env-file=./env_770 up -d
+        chdir: /home/tosh/ansibletest/
+

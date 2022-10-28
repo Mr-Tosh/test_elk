@@ -1,0 +1,27 @@
+filebeat.inputs:
+  - type: log
+    id: test_log
+    paths:
+      - /logs/*.log
+    multiline:
+      pattern: '^[0-9]{4}'
+      negate: true
+      match: after
+
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      templates:
+        - condition:
+            contains:
+              docker.container.name: local-filebeat
+          config:
+            - type: container
+              paths:
+                - /var/lib/docker/containers/${data.docker.container.id}/*.log
+
+
+output.file:
+  path: "/tmp/filebeat"
+  filename: text_logs
+
