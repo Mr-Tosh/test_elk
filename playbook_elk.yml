@@ -1,15 +1,63 @@
 ---
-- hosts: localhost
+- hosts: ubuntu
+  become: yes
   tasks:
+    - name: Install aptitude
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: true
+    - name: Install required system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: latest
+        update_cache: true
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Install git
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+
+    - name: Сreate workdirectory
+      file: path=/home/tosh/test state=directory
+
     - name: Clone a github repository
       git:
         repo: https://github.com/Mr-Tosh/test_elk.git
-        dest: /home/tosh/ansibletest/
+        dest: /home/tosh/test
         clone: yes
         update: yes
+        force: yes
 
-    - name: This command will change the working directory to somedir/
+    - name: run elk-cluster 7.7.0
       ansible.builtin.shell:
-        cmd: docker-compose --env-file=./env_770 up -d
-        chdir: /home/tosh/ansibletest/
+        cmd: docker-compose --env-file=.env_770 up -d
+        chdir: /home/tosh/test
 
